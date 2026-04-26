@@ -161,6 +161,57 @@ monitor (Phase 2.4) will all need to follow this constraint.
 
 ---
 
+## Phase 2.2 landed: Cluster detection over trace links
+
+**Closing commit:** [filled below after commit]
+
+**What changed:** detect_candidate_secondary_attractors operates
+over the TraceLinkGraph from Phase 2.1 to identify connected,
+coherent, distinct clusters of traces. Produces
+CandidateSecondaryAttractor objects. CANDIDATES ARE NOT SECONDARY
+R*s. Promotion to recognized R* happens at Level 7 (Phase 2.4)
+after self-encounter and SA6 coupling validate them.
+
+**Soft distinction (architectural decision A):** A cluster
+qualifies as a candidate if it is meaningfully distinct from
+primary R* along EITHER spatial OR orientational axes:
+- Spatial: centroid distance >= 0.75 * primary_basin_radius
+- Orientation: cosine similarity to primary orientation < 0.70
+Either route alone is sufficient. The dual criterion respects
+that endogenous alterity may begin INSIDE the primary basin with
+sub-structures forming first and differentiating later.
+
+**Provisional thresholds (decision B):**
+- MIN_CLUSTER_SIZE = 3
+- MIN_MEAN_EDGE_WEIGHT = 0.30
+- BASIN_RADIUS_FACTOR = 0.75
+- ORIENTATION_DISTINCTION_THRESHOLD = 0.70
+
+These are calibrated against architectural commitment (secondary
+R*s are significant, not common). Revisitable if synthetic-DEAP
+surfaces tuning evidence.
+
+**Calibration finding (synthetic-DEAP at seed=42, 30 trials):**
+1 candidate produced — size=20, route=both, dist=0.877, cos=-0.002,
+mean_w=0.709. Below the overproduction threshold of 3 candidates;
+no diagnostic flag triggered. The single candidate has high
+internal coherence (mean edge weight 0.709 vs 0.30 minimum) and is
+distinct from primary R* on both routes (spatial 0.877 against the
+0.75·basin floor; orientation cosine ≈ 0 — nearly orthogonal).
+Calibration looks tight against synthetic data; revisit after
+real-DEAP run.
+
+**What's now operational on the staged ladder:**
+- Level 1 (Phase 2.1): OutputRecord
+- Level 2 (existing): Trace deposit
+- Level 3 (Phase 2.1): TraceLinkGraph
+- Level 4 (THIS PHASE): CandidateSecondaryAttractor detection
+- Level 5 (Phase 2.3): Cluster reactivation as re-press
+- Level 6 (Phase 2.3): Self-encounter loop
+- Level 7 (Phase 2.4): Confirmed secondary R* via SA6 coupling
+
+---
+
 ## Open questions surfaced during cleanup
 
 These are not holdover items from the original audit. They emerged from

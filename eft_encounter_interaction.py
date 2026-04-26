@@ -16,6 +16,8 @@ from eft_encounter_env import (ExistencePress, ConditionFieldState, ConditionalE
     ExistencePressLibrary, ActiveConditionField, ReceivabilityOperators, CommensurabilityGate)
 from eft_outputs import OutputHistory, output_record_from_event
 from eft_trace_links import TraceLinkGraph, link_new_trace
+from eft_clusters import (CandidateSecondaryAttractor,
+                          detect_candidate_secondary_attractors)
 
 @dataclass
 class EncounterEvent:
@@ -208,6 +210,22 @@ class EncounterInteraction:
                 "blind_to": so.get("blind_direction","unknown"),
                 "blind_lambda": so.get("min_eigenvalue",0.0),
                 "note": "Self-observation updated H(t). Next observation will differ."}
+
+    def detect_candidates(self) -> List[CandidateSecondaryAttractor]:
+        """Run cluster detection over the current trace cloud and
+        link graph. Returns candidates without mutating any state.
+        On-demand: call this when the architecture wants to inspect
+        current candidate structure (e.g., before self-encounter in
+        Phase 2.3).
+        """
+        return detect_candidate_secondary_attractors(
+            traces=self.self_system.traces,
+            graph=self.trace_link_graph,
+            R_star_primary=self.self_system.R_star,
+            G_field=self.self_system.body.G_field(),
+            G_body=self.self_system.body.G_body(),
+            current_time=self.t,
+        )
 
 def run_phase_tests():
     lib = ExistencePressLibrary()
