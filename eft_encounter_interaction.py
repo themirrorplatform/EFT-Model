@@ -65,6 +65,16 @@ class EncounterInteraction:
 
     def process(self, press):
         self.t += 1
+        if press.magnitude > 1.5:
+            event = EncounterEvent(t=self.t, press=press, Lambda_act={}, r_scores={},
+                                   C_before=0.0, sigma_profile=np.zeros(DIM), enc_args={},
+                                   Sigma_before=len(self.env.Sigma))
+            event.encountered = False
+            event.no_encounter_reason = (f"magnitude_overwhelm: press.magnitude={press.magnitude:.3f} "
+                                         f"above R1 ceiling 1.5")
+            self.env.receive(press)
+            self.events.append(event)
+            return event
         lam = ActiveConditionField().compute(self.env.H, self.env.h, self.env.B_fatigue, self.env.q)
         r_scores = ReceivabilityOperators().compute_all(press, lam)
         gate = CommensurabilityGate()

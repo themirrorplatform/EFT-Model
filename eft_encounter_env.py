@@ -223,6 +223,11 @@ class ConditionalEncounterEnvironment:
         lam = self.F.compute(self.H, self.h, self.B_fatigue, self.q)
         r = self.R.compute_all(press, lam)
         C_result = self.gate.compute(r, lam['A_act'])
+        if press.magnitude > 1.5:
+            C_result = dict(C_result)
+            C_result['encounter'] = False
+            C_result['magnitude_overwhelm'] = True
+            C_result['overwhelm_magnitude'] = float(press.magnitude)
         result = {'t':self.t,'press':press.label,'press_class':press.press_class,
                   'epsilon':{'magnitude':round(press.magnitude,4),'valence':round(press.valence,4),
                              'direction':press.direction.round(3).tolist(),'persistence':round(press.persistence,4)},
@@ -257,6 +262,9 @@ class ConditionalEncounterEnvironment:
         return float(np.sqrt(diff))
 
     def _fail_reason(self, C_result, r):
+        if C_result.get('magnitude_overwhelm'):
+            m = C_result.get('overwhelm_magnitude', 0.0)
+            return f"magnitude_overwhelm: press.magnitude={m:.3f} above R1 ceiling 1.5"
         if not C_result['above_threshold']: return f"C(t)={C_result['C']:.3f} below theta_e={C_result['theta_e']}"
         if not C_result['support_met']: return f"only {C_result['support_channels']}/{C_result['k_required']} channels above floor"
         return "unknown"
