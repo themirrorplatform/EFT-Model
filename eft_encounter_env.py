@@ -142,8 +142,12 @@ class HistoryUpdater:
         H.mu1 = H.mu1+eta*(eps1-H.mu1)
         H.sigma1 = max(H.sigma1_min, H.sigma1+eta*delta*H.sigma1)
     def update_H2(self, H, eps2, r2_current, eta):
-        u=(eps2+1.0)/2.0; novelty=1.0-r2_current
-        H.alpha=H.alpha+eta*u*novelty; H.beta=H.beta+eta*(1.0-u)*novelty
+        u = (eps2 + 1.0) / 2.0
+        novelty = 1.0 - r2_current
+        target_alpha = u
+        target_beta = 1.0 - u
+        H.alpha = max(0.05, H.alpha + eta * novelty * (target_alpha - H.alpha))
+        H.beta = max(0.01, H.beta + eta * novelty * (target_beta - H.beta))
     def update_H3(self, H, eps3, S, eta):
         eps3_unit=eps3/(np.linalg.norm(eps3)+1e-12); outer=np.outer(eps3_unit,eps3_unit)
         complement=np.eye(DIM)-outer; frob=float(np.linalg.norm(H.A,'fro'))
