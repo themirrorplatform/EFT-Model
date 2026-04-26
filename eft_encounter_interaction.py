@@ -33,6 +33,10 @@ class EncounterEvent:
     delta_C: Optional[Dict] = None
     encountered: bool = False
     no_encounter_reason: str = ""
+    R_star_before: Optional[np.ndarray] = None
+    R_star_after_capture: Optional[np.ndarray] = None
+    traces_count_before: int = 0
+    traces_count_after: int = 0
 
 def _valence_to_emotion(valence):
     if valence > 0.5: return "joy"
@@ -63,8 +67,18 @@ class EncounterInteraction:
         self.events: List[EncounterEvent] = []
         print("EncounterInteraction initialized.")
 
+    def _finalize(self, event, R_star_before, traces_count_before):
+        event.R_star_before = R_star_before
+        event.traces_count_before = traces_count_before
+        event.R_star_after_capture = self.self_system.R_star.copy()
+        event.traces_count_after = len(self.self_system.traces)
+        self.events.append(event)
+        return event
+
     def process(self, press):
         self.t += 1
+        R_star_before = self.self_system.R_star.copy()
+        traces_count_before = len(self.self_system.traces)
         if press.magnitude > 1.5:
             event = EncounterEvent(t=self.t, press=press, Lambda_act={}, r_scores={},
                                    C_before=0.0, sigma_profile=np.zeros(DIM), enc_args={},
@@ -73,8 +87,7 @@ class EncounterInteraction:
             event.no_encounter_reason = (f"magnitude_overwhelm: press.magnitude={press.magnitude:.3f} "
                                          f"above R1 ceiling 1.5")
             self.env.receive(press)
-            self.events.append(event)
-            return event
+            return self._finalize(event, R_star_before, traces_count_before)
         lam = ActiveConditionField().compute(self.env.H, self.env.h, self.env.B_fatigue, self.env.q)
         r_scores = ReceivabilityOperators().compute_all(press, lam)
         gate = CommensurabilityGate()
@@ -90,8 +103,7 @@ class EncounterInteraction:
             event.no_encounter_reason = (f"C={round(C_before,3)} below theta_e={C_result_before['theta_e']}"
                 if not C_result_before["above_threshold"] else "support condition not met")
             self.env.receive(press)
-            self.events.append(event)
-            return event
+            return self._finalize(event, R_star_before, traces_count_before)
         event.encountered = True
         self.env.receive(press)
         event.self_result = self.self_system.encounter(**enc_args)
@@ -103,8 +115,7 @@ class EncounterInteraction:
         event.delta_M5 = self._derive_delta_M5(event)
         event.delta_Sigma = self._derive_delta_Sigma(event)
         event.delta_C = self._derive_delta_C(event)
-        self.events.append(event)
-        return event
+        return self._finalize(event, R_star_before, traces_count_before)
 
     def _derive_delta_M5(self, event):
         sr = event.self_result
