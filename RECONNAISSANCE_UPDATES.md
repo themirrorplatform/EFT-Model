@@ -136,6 +136,29 @@ not generative emission. The system reactivates a cluster and
 reintroduces it as an internally-sourced press into encounter(). This
 is what distinguishes EFT from a chatbot pretending to think.
 
+### Structural constraint discovered: _finalize is the only correct insertion point for post-encounter wiring
+
+During Phase 2.1 implementation, the initial wiring placement (after
+event.delta_M5/Sigma/C derivation) silently failed because
+event.traces_count_after and event.R_star_after_capture are populated
+inside EncounterInteraction._finalize, not at the call site of
+process(). Reading these fields before _finalize returns stale values
+with no error raised.
+
+The test test_links_form_between_temporally_close_traces caught this
+because it asserts edges form. Without that test, the bug would have
+shipped: every encounter would silently produce zero edges and
+Phase 2.2 cluster detection would have run against an empty graph.
+
+STRUCTURAL CONSTRAINT for Phase 2.2 and beyond: any code that reads
+R_star_after_capture, traces_count_after, or other _finalize-populated
+EncounterEvent fields MUST be wired inside _finalize after the field
+captures, not at the call site of process(). The dataclass-backfill
+pattern in _finalize is the only correct insertion point.
+
+Cluster detection (Phase 2.2), self-encounter (Phase 2.3), and SA6
+monitor (Phase 2.4) will all need to follow this constraint.
+
 ---
 
 ## Open questions surfaced during cleanup
