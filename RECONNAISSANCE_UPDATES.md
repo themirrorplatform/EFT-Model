@@ -100,6 +100,38 @@ to be a symmetric one. This is the new correct behavior.
 
 ---
 
+## Open questions surfaced during cleanup
+
+These are not holdover items from the original audit. They emerged from
+the cleanup work itself and are recorded here so future sessions can
+pick them up cleanly.
+
+### DEAP synthetic stress-event V_E asymmetry
+
+**Surfaced by:** D-1 admissibility diagnostic, commit 07ee251.
+
+**Finding:** Synthetic-DEAP stress event (trial P01_T04 at seed=42)
+produced R* V_E motion of 0.162 while the corresponding press supplied
+only 0.081 V_E direction — system V_E displacement exceeded what the
+external press justified. Clause C correctly flagged this as inadmissible.
+
+**Open question:** Determine whether this is (a) a translator calibration
+issue in how DEAP physiological signals map to press.direction[V_E],
+(b) an artifact of the synthetic stress-generator producing physiology
+that doesn't naturally route exit-orientation into the press shape, or
+(c) a deeper stress-to-exit mapping question about how the architecture
+expects stress events to engage V_E.
+
+**Where the work happens:** eft_deap_translator.py for (a) and (b);
+potentially the corpus / handoff for (c).
+
+**Status:** Not blocking. Real-DEAP-data validation (Priority 6 in the
+original audit) is the natural place to revisit this — real stress
+signal may resolve the question by showing whether the asymmetry
+persists or is purely synthetic-generator artifact.
+
+---
+
 ## What remains open
 
 In priority order, items from the reconnaissance NOT yet closed:

@@ -24,6 +24,20 @@ V_E_HORIZONTAL_THRESHOLD = 0.1   # |delta_x[V_E]| / |delta_x| under this
 V_E_PRESS_DRIVE_THRESHOLD = 0.1  # |press.direction[V_E]| over this
                                   # = press supplies V_E activation
 
+# Threshold calibration (commit 07ee251 + diagnostic):
+# Synthetic-DEAP sanity check across 10 trials at seed=42 showed:
+#   - Non-stress trials: V_E motion fraction 0.22-0.31, press V_E
+#     direction 0.20-0.45 (bracket-escape route, all PASS).
+#   - Stress trial (P01_T04): V_E motion 0.162, press V_E 0.081 —
+#     correctly FAILED clause C. Asymmetry: system V_E motion exceeded
+#     what the press supplied. This is the failure mode clause C is
+#     designed to catch (internal V_E generation without external
+#     drive). Open question for follow-up: how the synthetic-DEAP
+#     stress generator routes V_E activation into press direction.
+#   - The 0.1 threshold pair correctly distinguished the two regimes.
+# Real DEAP data may shift these calibration numbers; revisit after
+# first real-DEAP run.
+
 
 @dataclass
 class ClauseResult:
