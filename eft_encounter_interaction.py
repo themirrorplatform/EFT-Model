@@ -14,6 +14,8 @@ from typing import Dict, List, Optional
 from eft_verified_core import (DIM, V_T, V_A, V_B, V_R, V_E, GHOST_FLOOR, DEPOSIT_THRESHOLD)
 from eft_encounter_env import (ExistencePress, ConditionFieldState, ConditionalEncounterEnvironment,
     ExistencePressLibrary, ActiveConditionField, ReceivabilityOperators, CommensurabilityGate)
+from eft_outputs import OutputHistory, output_record_from_event
+from eft_trace_links import TraceLinkGraph, link_new_trace
 
 @dataclass
 class EncounterEvent:
@@ -65,6 +67,9 @@ class EncounterInteraction:
         self.self_system = EFTSystem(seed=seed)
         self.t = 0
         self.events: List[EncounterEvent] = []
+        self.output_history = OutputHistory()
+        self.trace_link_graph = TraceLinkGraph()
+        self.trace_times: List[int] = []  # parallel to self.self_system.traces
         print("EncounterInteraction initialized.")
 
     def _finalize(self, event, R_star_before, traces_count_before):
@@ -72,6 +77,32 @@ class EncounterInteraction:
         event.traces_count_before = traces_count_before
         event.R_star_after_capture = self.self_system.R_star.copy()
         event.traces_count_after = len(self.self_system.traces)
+
+        # Phase 2.1 limitation: EFTSystem prunes traces when count > 200.
+        # When pruning happens, our parallel trace_times list and the link
+        # graph become out of sync. For Phase 2.1 we accept this and reset
+        # the graph on detection. Phase 2.2 cluster detection will need to
+        # handle pruning more carefully (e.g., by tracking trace identity
+        # rather than position-in-list).
+        if len(self.self_system.traces) < len(self.trace_times):
+            self.trace_link_graph = TraceLinkGraph()
+            self.trace_times = [self.t for _ in self.self_system.traces]
+
+        # Level 1: record output
+        output = output_record_from_event(event)
+        if output is not None:
+            self.output_history.append(output)
+
+        # Level 3: link new trace into graph if a trace was deposited
+        if event.traces_count_after > event.traces_count_before:
+            new_idx = len(self.self_system.traces) - 1
+            self.trace_times.append(self.t)
+            link_new_trace(
+                self.trace_link_graph,
+                self.self_system.traces, self.trace_times,
+                new_idx
+            )
+
         self.events.append(event)
         return event
 

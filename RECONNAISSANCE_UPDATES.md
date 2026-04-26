@@ -100,6 +100,44 @@ to be a symmetric one. This is the new correct behavior.
 
 ---
 
+## Phase 2.1 landed: Output records + trace linking
+
+**Closing commit:** [filled below after commit]
+
+**What changed:** OutputRecord (Level 1 of the outputs ladder) and
+TraceLinkGraph (Level 3) are now operational. The system records
+structured responses to encounters and links traces by temporal
+proximity (50% of weight, primary), geometric distance in M^5 (25%),
+eigenmode alignment (15%), and significance strength (10%).
+Engram-literature-grounded; not similarity-only clustering.
+Coefficients are additive and sum to 1.0 — no factor is a hard
+multiplicative gate.
+
+**The full ladder, for reference:**
+- Level 1 (LANDED): OutputRecord — structured encounter response
+- Level 2 (existing): Trace deposit — durable residue
+- Level 3 (LANDED): TraceLinkGraph — weighted edges between traces
+- Level 4 (Phase 2.2): Cluster detection → CandidateSecondaryAttractors
+- Level 5 (Phase 2.3): Cluster reactivation as re-press (NOT generative
+  emission)
+- Level 6 (Phase 2.3): Self-encounter loop (is_external=False)
+- Level 7 (Phase 2.4): Confirmed secondary R* via SA6 coupling.
+  Construction 7 operationalized. Clause E* verifiable.
+
+**Architectural decision recorded:** Cluster→R* is candidate-then-
+confirmation. β for formation candidate, α for confirmation. Clusters
+produce CandidateSecondaryAttractors at Level 4; promotion to
+recognized secondary R* happens only at Level 7 when self-encounter
+/ SA6 coupling validates them. This prevents declaring every cluster
+a self.
+
+**Internal output discipline:** Level 5 must be cluster-replay-as-press,
+not generative emission. The system reactivates a cluster and
+reintroduces it as an internally-sourced press into encounter(). This
+is what distinguishes EFT from a chatbot pretending to think.
+
+---
+
 ## Open questions surfaced during cleanup
 
 These are not holdover items from the original audit. They emerged from
@@ -129,6 +167,33 @@ potentially the corpus / handoff for (c).
 original audit) is the natural place to revisit this — real stress
 signal may resolve the question by showing whether the asymmetry
 persists or is purely synthetic-generator artifact.
+
+### Cross-encounter cluster stabilization (recorded April 27)
+
+As Phase 2.2 cluster detection lands, an architectural question
+arises: does H(t)/Z(t) extend cleanly to govern cluster-stabilization
+dynamics across encounters, or is a separate slower mechanism needed
+on top? H(t) currently governs encounter gating and (after the §17.4
+fix) some cross-encounter adaptive dynamics in α/β/μ₁. The open
+question is whether trace-link cluster stabilization requires a
+slower cross-encounter gate beyond H(t)/Z(t), or whether the existing
+machinery should be extended to fill that role.
+
+Reference point: 2025 Nature work on astrocytic ensembles describes
+a slow integrator distinct from neuronal engrams that gates which
+traces stabilize across emotional repetitions. This is a structural
+parallel; whether EFT needs an analogous distinct mechanism is the
+open question.
+
+Where the work happens: a future module potentially named
+eft_consolidation_gate.py if a distinct mechanism is needed;
+otherwise extension of existing H(t)/Z(t) update logic in
+eft_encounter_env.py.
+
+Status: Not blocking. Surface again if Phase 2.2 cluster detection
+produces noisy or over-eager candidate attractors against synthetic-
+DEAP data — that would be evidence the existing machinery is
+insufficient and a slower gate needs to be built.
 
 ---
 
