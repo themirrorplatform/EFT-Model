@@ -51,24 +51,17 @@ class EigenmodeProjector:
     def __init__(self):
         self.learned_weights: Dict[str, np.ndarray] = {}
         self.encounter_count = 0
-        self.keyword_affinity = {
-            'past': np.array([0.9,0.1,0.1,0.1,0.1]), 'memory': np.array([0.8,0.1,0.1,0.2,0.1]),
-            'history': np.array([0.9,0.1,0.1,0.1,0.1]), 'before': np.array([0.8,0.1,0.1,0.1,0.1]),
-            'was': np.array([0.7,0.1,0.1,0.1,0.1]), 'identity': np.array([0.6,0.2,0.3,0.2,0.1]),
-            'act': np.array([0.1,0.9,0.1,0.1,0.1]), 'do': np.array([0.1,0.8,0.1,0.1,0.1]),
-            'choose': np.array([0.1,0.8,0.2,0.2,0.2]), 'control': np.array([0.1,0.7,0.3,0.1,0.1]),
-            'can': np.array([0.1,0.8,0.1,0.1,0.1]), 'protect': np.array([0.1,0.2,0.9,0.1,0.1]),
-            'edge': np.array([0.1,0.1,0.8,0.2,0.2]), 'limit': np.array([0.1,0.2,0.7,0.3,0.1]),
-            'inside': np.array([0.2,0.1,0.8,0.1,0.1]), 'outside': np.array([0.1,0.1,0.6,0.2,0.4]),
-            'other': np.array([0.1,0.1,0.5,0.2,0.5]), 'true': np.array([0.1,0.1,0.1,0.9,0.1]),
-            'real': np.array([0.1,0.1,0.1,0.9,0.1]), 'test': np.array([0.1,0.2,0.1,0.8,0.1]),
-            'believe': np.array([0.2,0.1,0.2,0.7,0.1]), 'know': np.array([0.2,0.1,0.1,0.8,0.1]),
-            'leave': np.array([0.1,0.1,0.2,0.1,0.9]), 'beyond': np.array([0.1,0.1,0.2,0.2,0.8]),
-            'unknown': np.array([0.1,0.1,0.1,0.2,0.9]),
-        }
 
     def project(self, content, explicit_weights=None, explicit_position=None):
-        weights = np.array(explicit_weights, dtype=float) if explicit_weights is not None else self._keyword_weights(content)
+        if explicit_weights is None:
+            raise ValueError(
+                "EigenmodeProjector.project requires explicit_weights. "
+                "The keyword-lookup fallback was removed in the April 10 "
+                "correction. Eigenmode projection must be output-side from "
+                "real signals (press.direction * sigma_profile, or "
+                "physiology via DEAP). See handoff §17.1."
+            )
+        weights = np.array(explicit_weights, dtype=float)
         w_norm = np.linalg.norm(weights)
         if w_norm < 1e-12:
             weights = np.ones(DIM) / np.sqrt(DIM); w_norm = 1.0
@@ -76,22 +69,6 @@ class EigenmodeProjector:
         x_p = np.array(explicit_position, dtype=float) if explicit_position is not None else n_p * min(w_norm * 0.3, 1.5)
         self.encounter_count += 1
         return x_p, n_p
-
-    def _keyword_weights(self, content):
-        words = content.lower().split()
-        weights = np.zeros(DIM)
-        for word in words:
-            if word in self.keyword_affinity:
-                weights += self.keyword_affinity[word]
-            else:
-                for key in self.keyword_affinity:
-                    if key in word or word in key:
-                        weights += self.keyword_affinity[key] * 0.5; break
-            if word in self.learned_weights:
-                weights += self.learned_weights[word]
-        if np.max(weights) < 1e-10:
-            weights = np.ones(DIM) * 0.2
-        return weights
 
     def learn_from_encounter(self, content, actual_n_p, significance):
         if significance < GHOST_FLOOR: return
@@ -200,8 +177,10 @@ class EFTSystem:
         if w_explicit is not None:
             input_activation = float(np.linalg.norm(w_explicit))
         else:
-            raw_w = self.projector._keyword_weights(content)
-            input_activation = max(float(np.linalg.norm(raw_w)) * 0.15, 0.3)
+            raise ValueError(
+                "EFTSystem.encounter requires eigenmode_weights. "
+                "Output-side projection is mandatory per §17.1."
+            )
 
         if significance_override is not None:
             sig_value = significance_override
