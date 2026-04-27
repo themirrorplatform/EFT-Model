@@ -201,6 +201,44 @@ distinct from primary R* on both routes (spatial 0.877 against the
 Calibration looks tight against synthetic data; revisit after
 real-DEAP run.
 
+Architectural reading of the single-candidate result:
+
+The 30-trial synthetic-DEAP run produced exactly one candidate of
+size=20 with mean_edge_weight=0.709, distance_to_primary=0.877,
+orientation_cosine=-0.002 (essentially orthogonal to primary R*).
+The cluster qualified by both routes (spatial + orientation), and
+primary R* has drifted away from the trace centroid, leaving one
+large coherent cluster reading as a distinct counter-attractor
+against primary R*.
+
+This is below the overproduction threshold (no diagnostic flag),
+but the SHAPE of the result is itself architecturally informative
+and underdetermined between two readings:
+
+Reading 1 — Real architectural property: early-stage endogenous
+alterity may form as a single coherent counter-cluster against
+primary R*, not as a multiplicity. Differentiation into multiple
+sub-selves would emerge later through Phase 2.3 self-encounter
+loops fragmenting the cluster.
+
+Reading 2 — Synthetic-DEAP artifact: the synthetic generator
+produces signals on a pre-specified unitary trajectory
+(calm → stress → recovery → consolidation), which naturally
+produces a unitary trace cloud. Real DEAP data, with diverse
+stimuli per trial, may produce multiple smaller candidates.
+
+Both readings are plausible. Resolution requires real-DEAP data
+(Priority 6 in the original audit). Phase 2.3 must NOT assume a
+multi-candidate landscape; the single-candidate case is the
+common one against synthetic data and must be handled as the
+default.
+
+Note on primary R* drift: over 30 trials, primary R* has settled
+away from the trace centroid. This is consistent with V2 sign
+convention (traces increase Ψ, primary R* sits at gradient
+balance, not at trace cluster's bottom) and is the mechanism that
+makes the cluster read as spatially distinct from primary.
+
 **What's now operational on the staged ladder:**
 - Level 1 (Phase 2.1): OutputRecord
 - Level 2 (existing): Trace deposit
